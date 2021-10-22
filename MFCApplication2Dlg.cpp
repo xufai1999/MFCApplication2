@@ -102,6 +102,9 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMFCApplication2Dlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON3, &CMFCApplication2Dlg::OnBnClickedButton3)
 	ON_BN_CLICKED(IDC_BUTTON4, &CMFCApplication2Dlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON2, &CMFCApplication2Dlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON5, &CMFCApplication2Dlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON6, &CMFCApplication2Dlg::OnBnClickedButton6)
 END_MESSAGE_MAP()
 
 
@@ -1488,4 +1491,93 @@ void CMFCApplication2Dlg::OnBnClickedButton4()
 
 	waitKey(0);
 
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedButton2()
+{
+	// TODO: 在此添加控件通知处理程序代码USES_CONVERSION;
+	USES_CONVERSION; 
+	char* s = T2A(strFilePath);
+	Mat srcImg = imread(s);
+	Mat img = Mat::zeros(srcImg.rows, srcImg.cols, CV_8UC1);
+	//imshow("src1", srcImg);
+	for (int i = 0; i < srcImg.rows; i++)
+	{
+		for (int j = 0; j < srcImg.cols; j++)
+		{
+			img.at<uchar>(i, j) = 0.3 * srcImg.at<Vec3b>(i, j)[0]
+				+ 0.59 * srcImg.at<Vec3b>(i, j)[1]
+				+ 0.11 * srcImg.at<Vec3b>(i, j)[2];
+		}
+	}
+	imshow("灰度图像", img);
+
+	Mat img1 = Mat::zeros(srcImg.rows, srcImg.cols, img.type());
+	threshold(img, img1, 100, 255, CV_THRESH_BINARY);
+	imshow("固定阈值分割", img1);
+
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedButton5()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	USES_CONVERSION;
+	char* s = T2A(strFilePath);
+	Mat srcImg = imread(s);
+	Mat img = Mat::zeros(srcImg.rows, srcImg.cols, CV_8UC1);
+	//imshow("src1", srcImg);
+	for (int i = 0; i < srcImg.rows; i++)
+	{
+		for (int j = 0; j < srcImg.cols; j++)
+		{
+			img.at<uchar>(i, j) = 0.3 * srcImg.at<Vec3b>(i, j)[0]
+				+ 0.59 * srcImg.at<Vec3b>(i, j)[1]
+				+ 0.11 * srcImg.at<Vec3b>(i, j)[2];
+		}
+	}
+	imshow("灰度图像", img);
+
+	Mat img1 = Mat::zeros(srcImg.rows, srcImg.cols, img.type());
+	threshold(img, img1, 100, 255, CV_THRESH_OTSU);
+	imshow("OTSU自适应阈值分割", img1);
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedButton6()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	USES_CONVERSION;
+	char* s = T2A(strFilePath);
+	Mat srcImg = imread(s);
+	Mat img = Mat::zeros(srcImg.rows, srcImg.cols, CV_8UC1);
+	//imshow("src1", srcImg);
+	for (int i = 0; i < srcImg.rows; i++)
+	{
+		for (int j = 0; j < srcImg.cols; j++)
+		{
+			img.at<uchar>(i, j) = 0.3 * srcImg.at<Vec3b>(i, j)[0]
+				+ 0.59 * srcImg.at<Vec3b>(i, j)[1]
+				+ 0.11 * srcImg.at<Vec3b>(i, j)[2];
+		}
+	}
+	imshow("灰度图像", img);
+	Mat grad = Mat::zeros(srcImg.rows, srcImg.cols, img.type());
+	double sumu = 0;
+	double sumGrad = 0;
+	for (int i = 1; i < img.rows - 1; i++) {
+		for (int j = 1; j < img.cols - 1; j++) {
+			int gradx = img.at<uchar>(i + 1, j) - img.at<uchar>(i - 1, j);
+			int grady = img.at<uchar>(i, j + 1) - img.at<uchar>(i, j - 1);
+			grad.at<uchar>(i, j) = fmax(fabs(gradx), fabs(grady));
+			sumGrad += grad.at<uchar>(i, j);
+			
+			sumu += grad.at<uchar>(i, j) * img.at<uchar>(i, j);
+		}
+	}
+	double kt = sumu / sumGrad;
+	Mat img1 = Mat::zeros(img.rows, img.cols, img.type());
+	threshold(img, img1, kt, 255, CV_THRESH_BINARY);
+	imshow("kittle自适应阈值分割", img1);
 }
