@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <iostream>
 #include <conio.h>
-#include <stdio.h>
 #include <fstream>
 
 using namespace cv;
@@ -105,6 +104,9 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON2, &CMFCApplication2Dlg::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON5, &CMFCApplication2Dlg::OnBnClickedButton5)
 	ON_BN_CLICKED(IDC_BUTTON6, &CMFCApplication2Dlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_BUTTON7, &CMFCApplication2Dlg::OnBnClickedButton7)
+	ON_BN_CLICKED(IDC_BUTTON8, &CMFCApplication2Dlg::OnBnClickedButton8)
+	ON_BN_CLICKED(IDC_BUTTON9, &CMFCApplication2Dlg::OnBnClickedButton9)
 END_MESSAGE_MAP()
 
 
@@ -1580,4 +1582,240 @@ void CMFCApplication2Dlg::OnBnClickedButton6()
 	Mat img1 = Mat::zeros(img.rows, img.cols, img.type());
 	threshold(img, img1, kt, 255, CV_THRESH_BINARY);
 	imshow("kittle自适应阈值分割", img1);
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedButton7()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	Mat pFrame1, pFrame2, pFrame3;  //当前帧
+
+	VideoCapture pCapture;
+
+	int nFrmNum;
+
+	Mat pframe;
+	pCapture = VideoCapture("G://BaiduNetdiskDownload//cat.avi");
+	pCapture >> pframe;
+
+	Mat pFrImg1, pFrImg2, pFrImg3;   //当前帧
+
+	pFrImg1.create(pframe.size(), CV_8UC1);
+	pFrImg2.create(pframe.size(), CV_8UC1);
+	pFrImg3.create(pframe.size(), CV_8UC1);
+
+	Mat pFrMat1, pFrMat2, pFrMat3;
+
+	nFrmNum = 0;
+	while (1)
+	{
+		nFrmNum++;
+
+		pCapture >> pFrame1;
+		if (pFrame1.data == NULL)
+			return;
+		pCapture >> pFrame2;
+		pCapture >> pFrame3;
+
+		cvtColor(pFrame1, pFrImg1, CV_BGR2GRAY);
+		cvtColor(pFrame2, pFrImg2, CV_BGR2GRAY);
+		cvtColor(pFrame3, pFrImg3, CV_BGR2GRAY);
+
+		absdiff(pFrImg1, pFrImg2, pFrMat1);//当前帧跟前面帧相减
+		absdiff(pFrImg2, pFrImg3, pFrMat2);//当前帧与后面帧相减
+													  //二值化前景图
+		threshold(pFrMat1, pFrMat1, 10, 255.0, CV_THRESH_BINARY);
+		threshold(pFrMat2, pFrMat2, 10, 255.0, CV_THRESH_BINARY);
+
+		Mat element = getStructuringElement(0, cv::Size(3, 3));
+		Mat element1 = getStructuringElement(0, cv::Size(5, 5));
+		//膨胀化前景图
+		erode(pFrMat1, pFrMat1, element);
+		erode(pFrMat2, pFrMat2, element);
+
+		dilate(pFrMat1, pFrMat1, element1);
+		dilate(pFrMat2, pFrMat2, element1);
+
+		dilate(pFrMat1, pFrMat1, element1);
+		dilate(pFrMat2, pFrMat2, element1);
+
+		//imshow("diff1", pFrMat1);
+		imshow("diff2", pFrMat2);
+
+		vector<vector<Point>> contours;
+		vector<Vec4i> hierarchy;
+		//当前帧与前面帧相减后提取的轮廓线
+		findContours(pFrMat2, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_NONE);
+		double Maxarea = 0;
+		int numi = 0;
+		for (size_t i = 0; i < contours.size(); ++i)
+		{
+			double area = contourArea(contours[i], false);
+			if (area > Maxarea)
+			{
+				Maxarea = area;
+				numi = i;
+			}
+		}
+		_cprintf("Maxarea=%f\n", Maxarea);
+		if (numi != 0)
+			drawContours(pFrame2, contours, numi, Scalar(0, 0, 255), 2);
+
+		Mat resultImage = Mat::zeros(pFrMat2.size(), CV_8U);
+
+		imshow("src", pFrame2);
+		waitKey(10);
+	}
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedButton8()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	//cvNamedWindow("origin", CV_WINDOW_AUTOSIZE);
+	//cvNamedWindow("background", CV_WINDOW_AUTOSIZE);
+	//cvNamedWindow("foreground", CV_WINDOW_AUTOSIZE);
+
+
+	//double alpha = 0.05;    //背景建模alpha值
+	//double std_init = 20;    //初始标准差
+	//double var_init = std_init * std_init;    //初始方差    
+	//double lamda = 2.5 * 1.2;    //背景更新参数
+
+
+	////视频文件
+	//CvCapture* capture = NULL;
+	////从文件读入
+	//// capture = cvCreateFileCapture("E:\\新建文件夹\\cs.AVI");
+	//capture = cvCreateFileCapture("G:\\BaiduNetdiskDownload\\test.AVI");
+
+	//IplImage* frame = NULL;        //原始图像
+	//IplImage* frame_u = NULL;    //期望图像
+	//IplImage* frame_d = NULL;    //前景图像
+	//IplImage* frame_var = NULL;    //方差图像
+	//IplImage* frame_std = NULL;    //标准差
+
+
+	////初始化frame_u, frame_d, frame_var, frame_std
+
+
+	//frame = cvQueryFrame(capture);
+	//frame_u = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
+	//frame_d = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
+	//frame_var = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
+	//frame_std = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 3);
+
+	//for (int j = 0; j < frame->height; ++j)
+	//{
+	//	for (int i = 0; i < frame->width; ++i)
+	//	{
+	//		frame_u->imageData[j * frame->widthStep + i * 3 + 0] = (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0];
+	//		frame_u->imageData[j * frame->widthStep + i * 3 + 1] = (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 1];
+	//		frame_u->imageData[j * frame->widthStep + i * 3 + 2] = (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 2];
+	//		frame_d->imageData[j * frame->widthStep + i * 3 + 0] = 0;
+	//		frame_d->imageData[j * frame->widthStep + i * 3 + 1] = 0;
+	//		frame_d->imageData[j * frame->widthStep + i * 3 + 2] = 0;
+	//		frame_var->imageData[j * frame->widthStep + i * 3 + 0] = var_init;
+	//		frame_var->imageData[j * frame->widthStep + i * 3 + 1] = var_init;
+	//		frame_var->imageData[j * frame->widthStep + i * 3 + 2] = var_init;
+	//		frame_std->imageData[j * frame->widthStep + i * 3 + 0] = std_init;
+	//		frame_std->imageData[j * frame->widthStep + i * 3 + 1] = std_init;
+	//		frame_std->imageData[j * frame->widthStep + i * 3 + 2] = std_init;
+
+	//	}
+	//}
+	//while (cvWaitKey(33) != 27)        //按ESC键退出, 帧率33ms
+	//{
+	//	frame = cvQueryFrame(capture);
+	//	//视频结束退出
+	//	if (!frame)
+	//	{
+	//		break;
+	//	}
+	//	//单高斯背景更新
+	//	for (int j = 0; j < frame->height; ++j)
+	//	{
+	//		for (int i = 0; i < frame->width; ++i)
+	//		{
+
+	//			//|I-u| < lamda*std 时认为是背景, 进行更新
+	//			if (abs((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 0]) < lamda * std_init &&
+	//				abs((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 1] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 1]) < lamda * std_init &&
+	//				abs((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 2] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 2]) < lamda * std_init)
+	//			{
+	//				//更新期望 u = (1-alpha)*u + alpha*I
+	//				frame_u->imageData[j * frame->widthStep + i * 3 + 0] = (1 - alpha) * (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 0] + alpha * (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0];
+	//				frame_u->imageData[j * frame->widthStep + i * 3 + 1] = (1 - alpha) * (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 1] + alpha * (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 1];
+	//				frame_u->imageData[j * frame->widthStep + i * 3 + 2] = (1 - alpha) * (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 2] + alpha * (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 2];
+
+
+	//				//更新方差 var = (1-alpha)*var + alpha*(I-u)^2
+	//				frame_var->imageData[j * frame->widthStep + i * 3 + 0] = (1 - alpha) * ((unsigned char)frame_var->imageData[j * frame->widthStep + i * 3 + 0]) +
+	//					alpha * ((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 0])
+	//					* ((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 0]);
+	//				frame_var->imageData[j * frame->widthStep + i * 3 + 1] = (1 - alpha) * ((unsigned char)frame_var->imageData[j * frame->widthStep + i * 3 + 1]) +
+	//					alpha * ((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 1])
+	//					* ((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 1]);
+	//				frame_var->imageData[j * frame->widthStep + i * 3 + 2] = (1 - alpha) * ((unsigned char)frame_var->imageData[j * frame->widthStep + i * 3 + 2]) +
+	//					alpha * ((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 2])
+	//					* ((unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 2]);
+
+	//				//更新标准差
+
+	//				frame_std->imageData[j * frame->widthStep + i * 3 + 0] = sqrt(frame_var->imageData[j * frame->widthStep + i * 3 + 0] * 1.0);
+	//				frame_std->imageData[j * frame->widthStep + i * 3 + 1] = sqrt(frame_var->imageData[j * frame->widthStep + i * 3 + 1] * 1.0);
+	//				frame_std->imageData[j * frame->widthStep + i * 3 + 2] = sqrt(frame_var->imageData[j * frame->widthStep + i * 3 + 2] * 1.0);
+	//			}
+
+
+	//			else
+	//			{
+	//				frame_d->imageData[j * frame->widthStep + i * 3 + 0] = (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 0] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 0];
+	//				frame_d->imageData[j * frame->widthStep + i * 3 + 1] = (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 1] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 1];
+	//				frame_d->imageData[j * frame->widthStep + i * 3 + 2] = (unsigned char)frame->imageData[j * frame->widthStep + i * 3 + 2] - (unsigned char)frame_u->imageData[j * frame->widthStep + i * 3 + 2];
+	//			}
+	//		}
+	//	}
+
+	//	//显示结果
+	//	frame_u->origin = 0;
+	//	frame_d->origin = 0;
+	//	cvShowImage("origin", frame);
+	//	cvShowImage("background", frame_u);
+	//	cvShowImage("foreground", frame_d);
+	//}
+}
+
+
+
+void CMFCApplication2Dlg::OnBnClickedButton9()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	Mat greyimg;
+	Mat foreground, foreground2;
+	Ptr<BackgroundSubtractorKNN> ptrKNN = createBackgroundSubtractorKNN(100, 400, true);
+	Ptr<BackgroundSubtractorMOG2> mog2 = createBackgroundSubtractorMOG2(100, 25, true);
+	namedWindow("Extracted Foreground");
+	VideoCapture pCapture;
+	Mat pframe;
+	pCapture = VideoCapture("G://BaiduNetdiskDownload//pets2001.avi");
+
+	while (1)
+	{
+		pCapture >> pframe;
+		if (pframe.data == NULL)
+			return;
+		cvtColor(pframe, greyimg, CV_BGR2GRAY);
+		long long t = getTickCount();
+		ptrKNN->apply(pframe, foreground, 0.01);
+		long long t1 = getTickCount();
+		mog2->apply(greyimg, foreground2, -1);
+		long long t2 = getTickCount();
+		_cprintf("t1 = %f t2 = %f\n", (t1 - t) / getTickFrequency(), (t2 - t1) / getTickFrequency());
+		imshow("Extracted Foreground", foreground);
+		imshow("Extracted Foreground2", foreground2);
+		imshow("video", pframe);
+		waitKey(10);
+	}
+	waitKey();
 }
